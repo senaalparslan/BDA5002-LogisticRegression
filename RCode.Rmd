@@ -8,7 +8,7 @@ output: html_notebook
 Firstly, I import data using read_csv function.
 ```{r}
 library(readr)
-dfIncome <- read_csv("/Users/zisanyalcinkaya/Desktop/SENA/Logistic Regression/adult_income.csv")
+dfIncome <- read_csv("/Users/Desktop/SENA/Logistic Regression/adult_income.csv")
 dfIncome
 ```
 
