@@ -1,0 +1,144 @@
+---
+title: "Find Best Logistic regression model for Adult Income Dataset"
+author: "Sena Alparslan"
+output: html_notebook
+---
+
+
+Firstly, I import data using read_csv function.
+```{r}
+library(readr)
+dfIncome <- read_csv("/Users/zisanyalcinkaya/Desktop/SENA/Logistic Regression/adult_income.csv")
+dfIncome
+```
+
+```{r}
+# Show the first few rows of the data
+head(dfIncome)
+
+colnames(dfIncome)
+
+plot(dfIncome) 
+```
+
+```{r}
+#Show attributes  
+attributes(dfIncome)
+
+# Generating a summary of all data attributes with the summary() function
+summary(dfIncome)
+
+
+#marital status combining
+table(dfIncome$marital_status)
+
+dfIncome$marital_status <- as.character(dfIncome$marital_status)
+
+dfIncome$marital_status[dfIncome$marital_status == "Married-AF-spouse" |
+                       dfIncome$marital_status == "Married-civ-spouse" |
+                       dfIncome$marital_status == "Married-spouse-absent" ] <- "Married"
+
+dfIncome$marital_status[dfIncome$marital_status == "Divorced" |
+                       dfIncome$marital_status == "Separated" |
+                       dfIncome$marital_status == "Widowed" | 
+                       dfIncome$marital_status == "Never-married"] <- "Not-Married"
+table(dfIncome$marital_status)
+
+
+
+
+ 
+```
+```{r}
+
+#country combining
+dfIncome$native_country <- as.character(dfIncome$native_country)
+
+europe <- c("England", "France", "Germany", "Greece", "Holand-Netherlands",
+            "Hungary", "Ireland", "Italy", "Poland", "Portugal", "Scotland",
+            "Yugoslavia")
+america <- c("Canada", "Cuba", "Dominican-Republic", "El-Salvador", "Guatemala",
+                   "Haiti", "Honduras", "Jamaica", "Mexico", "Nicaragua",
+                   "Outlying-US(Guam-USVI-etc)", "Puerto-Rico", "Trinadad&Tobago",
+                   "United-States","Columbia", "Ecuador", "Peru")
+asia <- c("Cambodia", "China", "Hong", "India", "Iran", "Japan", "Laos",
+          "Philippines", "Taiwan", "Thailand", "Vietnam")
+other <- c("South", "?")
+
+dfIncome$native_country[dfIncome$native_country %in% america] <- "America"
+dfIncome$native_country[dfIncome$native_country %in% asia] <- "Asia"
+dfIncome$native_country[dfIncome$native_country %in% europe] <- "Europe"
+dfIncome$native_country[dfIncome$native_country %in% other] <- "Other"
+
+table(dfIncome$native_country)
+```
+```{r}
+#workclass combining
+table(dfIncome$workclass)
+
+dfIncome$workclass <- as.character(dfIncome$workclass)
+
+dfIncome$workclass[dfIncome$workclass == "Without-pay" | 
+                  dfIncome$workclass == "Never-worked"] <- "Not-employe"
+
+dfIncome$workclass[dfIncome$workclass == "State-gov" |
+                  dfIncome$workclass == "Local-gov" | dfIncome$workclass == "Federal-gov" ] <- "Gov"
+
+dfIncome$workclass[dfIncome$workclass == "Self-emp-inc" |
+                  dfIncome$workclass == "Self-emp-not-inc"] <- "Self"
+
+table(dfIncome$workclass)
+
+# altered columns back to factors
+dfIncome$native_country <- as.factor(dfIncome$native_country)
+dfIncome$marital_status <- as.factor(dfIncome$marital_status)
+dfIncome$workclass <- as.factor(dfIncome$workclass)
+dfIncome$income_high <- as.factor(dfIncome$income_high)
+str(dfIncome)
+
+```
+```{r}
+#Missing Data
+dfIncome[dfIncome == "?"] <- NaN
+
+library(ggplot2)
+naniar::gg_miss_var(dfIncome) +
+  theme_minimal()+
+  labs(y = "Missing Value") 
+
+
+# correlation matrix
+library(corrplot)
+cor <- dfIncome[, sapply(dfIncome, is.numeric)]
+cor <- cor[complete.cases(cor), ]
+correlation_matrix <- cor(cor, method = "spearman")
+corrplot(correlation_matrix, method="color")
+```
+
+```{r}
+
+#split dataset
+train <- dfIncome %>% sample_frac(.8)
+
+test  <- anti_join(dfIncome, train)
+
+
+# Training The Model
+model1 <- glm(income_high ~ .,family = binomial(), data=train)
+summary(model1)
+
+
+#Prediction
+prediction <- predict(model1, test, type = "response")
+
+# Confusion Matrix
+table(test$income_high, prediction >= 0.5)
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
